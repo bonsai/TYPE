@@ -63,7 +63,7 @@ Action
 Effect / Output
 ```
 
-An Agent is the execution主体; an Action is the operation being executed.
+An Agent is the execution subject; an Action is the operation being executed.
 
 ## Action and Work
 
