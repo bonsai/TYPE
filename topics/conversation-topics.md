@@ -1,0 +1,27 @@
+# Conversation Topics
+
+- Typeとは何か
+- TypeにはTypeがあるのか
+- OntologyとTopologyの違い
+- Toposとは何か
+- Agentはどこに立っているのか
+- Agentは何をAwareしているのか
+- Agentは自分が認識できないものをどうAwareするのか
+- Typeを認識する主体とは何か
+- 認識における境界と排除
+- 哲学者の問い方をAgentに学習させる
+- Socratesの「定義を問う」
+- Platoの「個別から一般へ抽象化する」
+- Wittgensteinの「言葉の使われ方を問う」
+- FDEのField Awareness
+- 卑弥呼の状況・人・土地の把握
+- 社会をどうType化するか
+- Platoの理念による社会分類
+- Marxの歴史・生産関係による社会分類
+- 社会を分類するAgent自身の立場
+- Agoraとは何か
+- Scholaとは何か
+- Agora Scholaという対話の場
+- Question → Dialogue → Concept → Research → Practice
+- Topicとは何か
+- ToposとTopicの違い
