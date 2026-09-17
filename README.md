@@ -1,6 +1,6 @@
 # TYPE
 
-**TYPE = a unified type system for describing data, requests, work, cognition, actions, entities, events, relations, and outputs.**
+**TYPE = a unified type system for describing data, requests, work, cognition, actions, agents, entities, events, relations, and outputs.**
 
 TYPE is not limited to programming-language types. It provides a common vocabulary for describing what something is, what it contains, what it can do, how it relates to other things, and how it changes.
 
@@ -24,13 +24,15 @@ TYPE
 ├── Request       requests, questions, commands, instructions
 ├── Work          research, build, fix, design, review
 ├── Cognition     observe, identify, compare, infer, decide
+├── Action        executable operations
+├── Agent         execution subjects
 ├── Entity        person, organization, place, product, concept
 ├── Event         create, update, delete, publish, merge, deploy
 ├── Relation      contains, depends_on, references, causes
 └── Output        answer, report, dataset, code, document, decision
 ```
 
-## Request → Work → Cognition → Output
+## Request → Work → Cognition → Action → Output
 
 A central purpose of TYPE is to describe the lifecycle of a request using the same type language.
 
@@ -40,6 +42,8 @@ Request
 Work
   ↓
 Cognition
+  ↓
+Action
   ↓
 Output
 ```
@@ -52,6 +56,8 @@ ResearchRequest
 ResearchWork
   ↓
 Observe → Identify → Classify → Compare → Infer
+  ↓
+ResearchAction
   ↓
 ResearchOutput
 ```
@@ -96,6 +102,8 @@ Classify
       ↓
 Analyze
       ↓
+ResearchAction
+      ↓
 ResearchOutput
 ```
 
@@ -103,15 +111,50 @@ Therefore:
 
 > **Workflow = a graph of type transformations and transitions.**
 
+## Type and Action
+
+Action is the executable operation in the TYPE model.
+
+```text
+Action Type
+    ↓
+Action Instance
+    ↓
+Execution
+    ↓
+Effect / Output
+```
+
+> **Action = what is done.**
+
+See [action.md](action.md).
+
 ## Type and Agent
 
-An agent can also be described as a type composition.
+Agent is the execution subject that observes context, reasons, decides, and executes work through Actions.
+
+```text
+Request
+   ↓
+Agent
+   ├── Observe
+   ├── Reason
+   ├── Decide
+   └── Execute
+          ↓
+       Action
+          ↓
+       Effect
+          ↓
+       Output / State
+```
 
 ```yaml
 type: Agent
 
 input:
   - Request
+  - Context
 
 cognition:
   - Observe
@@ -119,14 +162,43 @@ cognition:
   - Decide
 
 work:
-  - Research
-  - Build
-  - Review
+  - WorkType
+
+actions:
+  - ActionType
 
 output:
-  - Answer
-  - Artifact
-  - Action
+  - OutputType
+```
+
+> **Agent = who / what executes.**
+
+See [agent.md](agent.md).
+
+## Agent × Action × Work
+
+```text
+WorkType
+    ↓
+Task
+    ↓
+Agent
+    ↓ executes
+Action
+    ↓
+Effect
+    ↓
+Output / State
+```
+
+The distinctions are intentional:
+
+```text
+WorkType = what work is being defined
+Task     = a concrete work instance
+Agent    = who / what executes
+Action   = what operation is executed
+Workflow = how actions are sequenced
 ```
 
 ## Common schema
@@ -189,13 +261,22 @@ A type defines a class of things; an instance is a concrete occurrence.
 
 A type describes what something is and can do. A workflow describes how typed things transform or transition.
 
-### 3. Types are composable
+### 3. Agent is not Action
 
 ```text
-Request + Cognition + Work + Output = a typed workflow
+Agent  = execution subject
+Action = executable operation
 ```
 
-### 4. Types are extensible
+An Agent executes Actions; an Action does not become an Agent merely because it is executable.
+
+### 4. Types are composable
+
+```text
+Request + Cognition + Work + Agent + Action + Output = a typed workflow
+```
+
+### 5. Types are extensible
 
 ```text
 Core Type
@@ -207,7 +288,7 @@ Project Type
 Instance
 ```
 
-### 5. Every important concept should answer
+### 6. Every important concept should answer
 
 ```text
 What type is this?
@@ -215,4 +296,4 @@ What type is this?
 
 ## One-line definition
 
-> **TYPE is the canonical vocabulary for describing data, requests, work, cognition, actions, entities, events, relations, and outputs as one composable type system.**
+> **TYPE is the canonical vocabulary for describing data, requests, work, cognition, actions, agents, entities, events, relations, and outputs as one composable type system.**
