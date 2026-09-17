@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>型をめぐる対話 — TYPE</title>
+<style>
+:root{--bg:#050505;--fg:#f2f2f2;--muted:#777;--plato:#b8d7ff;--azuma:#ffd6a0;--line:#202020}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:var(--bg);color:var(--fg);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Noto Sans JP",monospace;overflow:hidden}
+button,input{font:inherit}button{color:inherit;background:none;border:0;cursor:pointer}
+#app{height:100%;display:flex;flex-direction:column}
+header{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;border-bottom:1px solid var(--line);color:var(--muted);font-size:12px}
+.brand{color:#fff;font-weight:700;letter-spacing:.12em}.source{color:#555}
+main{flex:1;display:flex;align-items:center;justify-content:center;padding:34px 7vw;min-height:0}
+#stage{width:min(1100px,100%);height:min(76vh,760px);display:flex;flex-direction:column;justify-content:center;position:relative}
+.episode{color:#555;font-size:13px;margin-bottom:22px;letter-spacing:.08em}.title{font-size:clamp(28px,4vw,58px);line-height:1.2;margin:0 0 34px;font-weight:700}
+.dialogue{max-height:68vh;overflow:auto;padding-right:18px;scrollbar-width:thin;scrollbar-color:#333 transparent}
+.line{margin:0 0 28px;opacity:0;transform:translateY(8px);animation:in .35s ease forwards}.speaker{font-size:13px;margin-bottom:9px;letter-spacing:.1em}.speaker.plato{color:var(--plato)}.speaker.azuma{color:var(--azuma)}
+.text{font-family:"Noto Sans JP",system-ui,sans-serif;font-size:clamp(17px,2vw,25px);line-height:1.9;white-space:pre-wrap}.text code,.code{font-family:inherit}
+.caret{display:inline-block;width:.62em;height:1em;border-right:2px solid #aaa;vertical-align:-.12em;animation:blink .8s steps(1) infinite}
+footer{height:68px;border-top:1px solid var(--line);display:flex;align-items:center;gap:20px;padding:0 28px;color:#666;font-size:12px}.controls{margin-left:auto;display:flex;gap:6px}.controls button{border:1px solid #222;padding:7px 11px}.controls button:hover{border-color:#555;color:#fff}
+#speed{width:110px;accent-color:#aaa}.status{min-width:100px;text-align:right}.paused{color:#fff}
+.empty{text-align:center;color:#666}.error{color:#ff8f8f;line-height:1.8}
+@keyframes in{to{opacity:1;transform:none}}@keyframes blink{50%{opacity:0}}
+@media(max-width:700px){header{padding:0 14px}.source{display:none}main{padding:22px 18px}#stage{height:75vh}.title{font-size:30px}.text{font-size:16px;line-height:1.8}footer{padding:0 14px;gap:10px}.hint{display:none}.dialogue{max-height:65vh}}
+</style>
+</head>
+<body>
+<div id="app">
+<header><div class="brand">TYPE</div><div class="source">Plato × Azuma · fictional dialogue</div></header>
+<main><section id="stage"><div id="content"><div class="empty">loading dialogue...</div></div></section></main>
+<footer>
+ <div class="hint">← → / Space: next · Home / End: jump · click: pause</div>
+ <div>速度 <input id="speed" type="range" min="10" max="160" value="55" step="5"><span id="speedLabel">55ms</span></div>
+ <div class="controls"><button id="prev">←</button><button id="pause">Ⅱ</button><button id="next">→</button></div>
+ <div class="status" id="status">— / —</div>
+</footer>
+</div>
+<script>
+const MD='型をめぐるプラトンと東浩紀（IT理解者として）の対話.md';
+let sections=[],si=0,li=0,paused=false,timer=null,charIndex=0;
+const $=id=>document.getElementById(id), content=$('content');
+function parse(md){
+  const chunks=md.split(/\n---\n/g); const out=[];
+  for(const chunk of chunks){
+    const hm=chunk.match(/(?:^|\n)##\s+(.+?)(?=\n|$)/); if(!hm) continue;
+    const title=hm[1].trim(); const body=chunk.slice(hm.index+hm[0].length);
+    const lines=[]; const re=/\*\*(プラトン|東)(?:：|:)\*\*\s*\n([\s\S]*?)(?=\n\*\*(?:プラトン|東)(?:：|:)\*\*|$)/g; let m;
+    while((m=re.exec(body))){let text=m[2].trim(); text=text.replace(/```[\s\S]*?```/g,'').trim(); if(text) lines.push({speaker:m[1],text});}
+    if(lines.length) out.push({title,lines});
+  }
+  return out;
+}
+function mdText(s){return s.replace(/\*\*(.*?)\*\*/g,'$1').replace(/`([^`]+)`/g,'$1').trim()}
+function updateStatus(){ $('status').textContent=`${String(si+1).padStart(2,'0')} / ${String(sections.length).padStart(2,'0')}` }
+function renderSection(){
+  clearTimeout(timer); charIndex=0; const sec=sections[si];
+  content.innerHTML=`<div class="episode">${String(si+1).padStart(2,'0')}</div><h1 class="title">${escapeHtml(sec.title)}</h1><div class="dialogue" id="dialogue"></div>`;
+  li=0; paused=false; $('pause').textContent='Ⅱ'; updateStatus(); showLine();
+}
+function showLine(){
+  clearTimeout(timer); const sec=sections[si]; const box=$('dialogue'); if(!box) return;
+  if(li>=sec.lines.length){return}
+  const l=sec.lines[li]; const div=document.createElement('div'); div.className='line';
+  const who=l.speaker==='プラトン'?'plato':'azuma'; div.innerHTML=`<div class="speaker ${who}">${l.speaker}</div><div class="text"></div>`; box.appendChild(div); requestAnimationFrame(()=>div.style.opacity='1');
+  const text=div.querySelector('.text'), full=mdText(l.text); charIndex=0; type(text,full,()=>{li++; if(li<sec.lines.length && !paused){timer=setTimeout(showLine,260)}});
+}
+function type(el,full,done){
+  if(paused){timer=setTimeout(()=>type(el,full,done),80);return}
+  if(charIndex>=full.length){el.textContent=full; done(); return}
+  el.textContent=full.slice(0,++charIndex); const caret=document.createElement('span'); caret.className='caret'; el.appendChild(caret);
+  const delay=Math.max(10,Number($('speed').value)); timer=setTimeout(()=>type(el,full,done),delay);
+}
+function next(){ if(si<sections.length-1){si++;renderSection()} else {li=sections[si].lines.length;clearTimeout(timer)} }
+function prev(){ if(li>0){li=Math.max(0,li-2);renderSection()} else if(si>0){si--;renderSection()} }
+function togglePause(){paused=!paused;$('pause').textContent=paused?'▶':'Ⅱ'; if(!paused){const sec=sections[si]; if(li<sec.lines.length){showLine()}}}
+function escapeHtml(s){return s.replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\\':'&#92;','"':'&quot;'}[c]))}
+document.addEventListener('keydown',e=>{if(['INPUT'].includes(document.activeElement.tagName))return; if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();next()}else if(e.key==='ArrowLeft'){e.preventDefault();prev()}else if(e.key==='Home'){si=0;renderSection()}else if(e.key==='End'){si=sections.length-1;renderSection()}else if(e.key==='Escape'){togglePause()}});
+$('next').onclick=next;$('prev').onclick=prev;$('pause').onclick=togglePause;document.getElementById('stage').onclick=togglePause;$('speed').oninput=e=>$('speedLabel').textContent=e.target.value+'ms';
+fetch(encodeURI(MD)).then(r=>{if(!r.ok)throw new Error('source markdown not found');return r.text()}).then(md=>{sections=parse(md);if(!sections.length)throw new Error('dialogue sections not found');renderSection()}).catch(err=>{content.innerHTML=`<div class="error">${escapeHtml(err.message)}<br><br>GitHub PagesでこのHTMLと対話.mdを同じリポジトリに置いてください。</div>`});
+</script>
+</body>
+</html>
